@@ -29,6 +29,8 @@ model User {
   hash  String
   role  Role   @default(Reader)
 
+  refresh_token String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -49,5 +51,6 @@ model Note {
   userId Int
   User   User @relation(fields: [userId], references: [id])
 
+  @@unique([id, userId])
   @@map("Note")
 }

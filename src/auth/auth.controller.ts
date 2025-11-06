@@ -5,35 +5,50 @@ import {
   HttpStatus,
   Post,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './guards';
+import { AuthGuard, RTGuard } from './guards';
 import { GetUser } from './decorator/get_user.decorator';
+import { GetRefreshToken } from './decorator/RequestWithRtUser';
+import { Tokens } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
-  @Post('Register')
+  @Post('register')
   register(@Body() dto: AuthRegisterDto) {
+    this.logger.log(`Processing new user registration.`);
     return this.authService.register(dto);
   }
-  @Post('Login')
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
   login(@Body() dto: AuthLoginDto) {
+    this.logger.log(`Processing login attempt.`);
     return this.authService.login(dto);
   }
-  @UseGuards(AuthGuard) // Logout olmak için önce giriş yapmış olmanız gerekir.
+
+  @UseGuards(RTGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('refresh')
+  refreshTokens(
+    @GetUser('sub') userId: number,
+    @GetRefreshToken() refreshToken: string,
+  ): Promise<Tokens> {
+    this.logger.log(`User ${userId} is refreshing tokens.`);
+    return this.authService.refreshTokens(userId, refreshToken);
+  }
+
+  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@GetUser('sub') userId: number) {
-    // Bu basit yöntemde sunucunun yapması gereken hiçbir şey yoktur.
-    // İstemci token'ı sildiği anda işlem tamamdır.
-    // İsteğe bağlı olarak, kimin ne zaman çıkış yaptığını loglayabilirsiniz.
-    console.log(`User with ID ${userId} logged out.`);
+    this.logger.log(`The user with ID ${userId} has logged out.`);
 
-    return {
-      message: 'Logged out successfully',
-    };
+    return this.authService.logout(userId);
   }
 }

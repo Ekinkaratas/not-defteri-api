@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { NoteService } from './note.service';
 import { AuthModule } from '../auth/auth.module';
 import { NoteController } from './note.controller';
@@ -6,6 +6,6 @@ import { NoteController } from './note.controller';
 @Module({
   imports: [AuthModule],
   controllers: [NoteController],
-  providers: [NoteService],
+  providers: [NoteService, Logger],
 })
 export class NoteModule {}

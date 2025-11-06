@@ -5,8 +5,8 @@ interface JwtPayload {
   sub: number;
   email: string;
   role: string;
-  firstName: true;
-  createdAt: true;
+  firstName: string;
+  createdAt: Date;
 }
 
 interface RequestWithUser extends Request {

@@ -1,11 +1,4 @@
-import {
-  IsNotEmpty,
-  IsDefined,
-  IsOptional,
-  IsString,
-  IsNumber,
-  IsDate,
-} from 'class-validator';
+import { IsNotEmpty, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class createNoteDto {
   @IsNotEmpty()
@@ -30,15 +23,11 @@ export class EditNoteDto {
 }
 
 export class returnDto {
+  @IsNotEmpty()
+  @IsDefined()
+  id: number;
   @IsString()
   title: string;
   @IsString()
   content: string;
-  @IsDate()
-  createdAt: Date;
-  @IsDate()
-  updatedAt: Date;
-  @IsNumber()
-  @IsOptional()
-  userId: number;
 }

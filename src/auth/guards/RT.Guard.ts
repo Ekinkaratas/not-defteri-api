@@ -9,22 +9,19 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 
-// Tip güvenliği için payload'un neye benzediğini tanımlıyoruz.
 interface JwtPayload {
   sub: number;
   email: string;
   role: string;
 }
 
-// Express'in Request tipini, 'user' adında bir özellik içerecek şekilde genişletiyoruz.
-// Bu, "request['user'] = payload" satırındaki hatayı ortadan kaldırır.
-interface RequestWithUser extends Request {
-  user: JwtPayload;
+interface RequestWithRtUser extends Request {
+  user: JwtPayload & { refreshToken: string };
 }
 
 @Injectable()
-export class AuthGuard implements CanActivate {
-  private readonly logger = new Logger(AuthGuard.name);
+export class RTGuard implements CanActivate {
+  private readonly logger = new Logger(RTGuard.name);
 
   constructor(
     private readonly jwtService: JwtService,
@@ -32,22 +29,22 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 1. request'e açıkça tip veriyoruz.
-    const request: RequestWithUser = context.switchToHttp().getRequest();
+    const request: RequestWithRtUser = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
       const payload: JwtPayload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
-      request.user = payload;
+      request.user = { ...payload, refreshToken: token };
     } catch {
-      throw new UnauthorizedException();
+      this.logger.warn('Invalid or expired refresh token');
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
     return true;
